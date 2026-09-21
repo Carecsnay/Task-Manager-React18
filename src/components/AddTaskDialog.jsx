@@ -113,6 +113,7 @@ const AddTaskDialog = ({
                   label="Título"
                   placeholder="Título da tarefa"
                   errorMessage={titleError?.message}
+                  disabled={isLoading}
                   ref={titleRef}
                 ></Input>
 
@@ -122,6 +123,7 @@ const AddTaskDialog = ({
                   id="description"
                   label="Descrição"
                   placeholder="Descreva a tarefa"
+                  disabled={isLoading}
                   errorMessage={descriptionError?.message}
                   ref={decriptionRef}
                 ></Input>
