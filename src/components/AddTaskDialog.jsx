@@ -4,16 +4,23 @@ import { createPortal } from 'react-dom';
 import { CSSTransition } from 'react-transition-group';
 import { v4 } from 'uuid';
 
+import { LoaderIcon } from '../assets/icons';
 import './AddTaskDialog.css';
-
 import Button from './Button';
 import Input from './Input';
 import TimeSelect from './TimeSelect';
 
-const AddTaskDialog = ({ isOpen, handleClose, handleSubmit }) => {
+const AddTaskDialog = ({
+  isOpen,
+  handleClose,
+  onSubmitSuccess,
+  onSubmitError,
+}) => {
   const [errors, setErrors] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSaveClick = () => {
+  const handleSaveClick = async () => {
+    setIsLoading(true);
     const newErrors = [];
     const title = titleRef.current.value;
     const description = decriptionRef.current.value;
@@ -43,16 +50,20 @@ const AddTaskDialog = ({ isOpen, handleClose, handleSubmit }) => {
     setErrors(newErrors);
 
     if (newErrors.length > 0) {
-      return;
+      return setIsLoading(false);
     }
-
-    handleSubmit({
-      id: v4(),
-      title,
-      description,
-      time,
-      status: 'not_started',
+    const task = { id: v4(), title, time, description, status: 'not_started' };
+    const response = await fetch('http://localhost:8000/tasks', {
+      method: 'POST',
+      body: JSON.stringify(task),
     });
+
+    if (!response.ok) {
+      setIsLoading(false);
+      return onSubmitError();
+    }
+    setIsLoading(false);
+    onSubmitSuccess(task);
     handleClose();
   };
 
@@ -128,7 +139,11 @@ const AddTaskDialog = ({ isOpen, handleClose, handleSubmit }) => {
                     className="w-full"
                     size="medium"
                     onClick={handleSaveClick}
+                    disabled={isLoading}
                   >
+                    {isLoading && (
+                      <LoaderIcon className="h-6 w-6 animate-spin" />
+                    )}
                     Salvar
                   </Button>
                 </div>
@@ -145,6 +160,7 @@ const AddTaskDialog = ({ isOpen, handleClose, handleSubmit }) => {
 AddTaskDialog.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   handleClose: PropTypes.func.isRequired,
-  handleSubmit: PropTypes.func.isRequired,
+  onSubmitSuccess: PropTypes.func.isRequired,
+  onSubmitError: PropTypes.func.isRequired,
 };
 export default AddTaskDialog;
