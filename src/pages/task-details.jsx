@@ -75,7 +75,7 @@ const TaskDetailsPage = () => {
     });
 
     if (!response.ok) {
-      toast.success('Ocorreu um erro ao salvar a tarefa!');
+      toast.error('Ocorreu um erro ao deletar a tarefa!');
       return setIsLoading(false);
     }
 
@@ -87,6 +87,19 @@ const TaskDetailsPage = () => {
     setTimeout(() => {
       navigate(-1);
     }, 1000);
+  };
+
+  const handleDeleteClick = async () => {
+    const response = await fetch(`http://localhost:8000/${task.id}`, {
+      method: 'DELETE',
+    });
+
+    if (!response.ok) {
+      return toast.error('Ocorreu um erro ao deletar a tarefa!');
+    }
+
+    toast.success('Tarefa deletada com sucesso!');
+    navigate(-1);
   };
 
   useEffect(() => {
@@ -129,7 +142,11 @@ const TaskDetailsPage = () => {
           </div>
 
           {/* parte da direita */}
-          <Button className="h-fit self-end" color="danger">
+          <Button
+            className="h-fit self-end"
+            color="danger"
+            onClick={handleDeleteClick}
+          >
             <TrashIcon />
             Deletar tarefa
           </Button>
