@@ -3,9 +3,9 @@
     {
       "id": "O0Ker5kz-j8",
       "title": "Estudar System Design",
-      "time": "morning",
+      "time": "evening",
       "description": "Finalizar as 4 aulas do treinamento intensivo.",
-      "status": "in_progress"
+      "status": "done"
     },
     {
       "id": "WFKjigITLf0",
@@ -23,8 +23,8 @@
     },
     {
       "id": "mP4_R0s82qw",
-      "title": "dsadad",
-      "time": "afternoon",
+      "title": "Tralala",
+      "time": "morning",
       "description": "asda",
       "status": "done"
     },
@@ -39,8 +39,8 @@
       "id": "n0seRT166tQ",
       "title": "tralala",
       "time": "afternoon",
-      "description": "dsa",
-      "status": "not_started"
+      "description": "dsas",
+      "status": "in_progress"
     }
   ],
   "$schema": "./node_modules/json-server/schema.json"

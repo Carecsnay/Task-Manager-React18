@@ -16,12 +16,13 @@ import TimeSelect from '../components/TimeSelect';
 const TaskDetailsPage = () => {
   const { taskId } = useParams();
   const [task, setTask] = useState();
-  const [isLoading, setIsLoading] = useState();
+  const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState([]);
 
   const titleRef = useRef();
   const decriptionRef = useRef();
   const timeRef = useRef();
+  const statusRef = useRef();
 
   const navigate = useNavigate();
 
@@ -41,11 +42,12 @@ const TaskDetailsPage = () => {
     const title = titleRef.current.value;
     const time = timeRef.current.value;
     const description = decriptionRef.current.value;
+    const status = statusRef.current.value;
 
     if (!title.trim()) {
       newErrors.push({
         inputError: 'title',
-        message: 'O campo titulo é obrigatório.',
+        message: 'O campo título é obrigatório.',
       });
     }
 
@@ -69,46 +71,60 @@ const TaskDetailsPage = () => {
       return setIsLoading(false);
     }
 
-    const response = await fetch(`http://localhost:8000/tasks/${task.id}`, {
-      method: 'PATCH',
-      body: JSON.stringify({ title, time, description }),
-    });
+    try {
+      const response = await fetch(`http://localhost:8000/tasks/${task.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ title, time, description, status }),
+      });
 
-    if (!response.ok) {
-      toast.error('Ocorreu um erro ao deletar a tarefa!');
-      return setIsLoading(false);
+      if (!response.ok) {
+        toast.error('Ocorreu um erro ao atualizar a tarefa!');
+        return setIsLoading(false);
+      }
+
+      setIsLoading(false);
+      const newTask = await response.json();
+      setTask(newTask);
+      toast.success('Tarefa atualizada com sucesso!');
+
+      setTimeout(() => {
+        navigate(-1);
+      }, 1000);
+    } catch (error) {
+      toast.error('Erro ao conectar ao servidor.');
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
-    const newTask = await response.json();
-    setTask(newTask);
-    toast.success('Tarefa atualizada com sucesso!');
-
-    setTimeout(() => {
-      navigate(-1);
-    }, 1000);
   };
 
   const handleDeleteClick = async () => {
-    const response = await fetch(`http://localhost:8000/tasks/${taskId}`, {
-      method: 'DELETE',
-    });
+    try {
+      const response = await fetch(`http://localhost:8000/tasks/${taskId}`, {
+        method: 'DELETE',
+      });
 
-    if (!response.ok) {
-      return toast.error('Ocorreu um erro ao deletar a tarefa!');
+      if (!response.ok) {
+        return toast.error('Ocorreu um erro ao deletar a tarefa!');
+      }
+
+      toast.success('Tarefa deletada com sucesso!');
+      navigate(-1);
+    } catch (error) {
+      toast.error('Erro ao conectar ao servidor.');
     }
-
-    toast.success('Tarefa deletada com sucesso!');
-    navigate(-1);
   };
 
   useEffect(() => {
     const fetchTask = async () => {
-      const response = await fetch(`http://localhost:8000/tasks/${taskId}`, {
-        method: 'GET',
-      });
-      const data = await response.json();
-      setTask(data);
+      try {
+        const response = await fetch(`http://localhost:8000/tasks/${taskId}`);
+        const data = await response.json();
+        setTask(data);
+      } catch (error) {
+        toast.error('Erro ao carregar os dados da tarefa.');
+      }
     };
 
     fetchTask();
@@ -120,7 +136,6 @@ const TaskDetailsPage = () => {
       <div className="w-full space-y-6 px-8 py-16">
         {/* barra do topo */}
         <div className="flex w-full justify-between">
-          {/* parte da esquerda */}
           <div>
             <button
               onClick={handleBackClick}
@@ -141,7 +156,6 @@ const TaskDetailsPage = () => {
             <h1 className="mt-2 text-xl font-semibold">{task?.title}</h1>
           </div>
 
-          {/* parte da direita */}
           <Button
             className="h-fit self-end"
             color="danger"
@@ -153,35 +167,52 @@ const TaskDetailsPage = () => {
         </div>
 
         {/* dados da tarefa */}
-        <div className="space-y-6 rounded-xl bg-brand-white p-6">
-          <div>
-            <Input
-              id="title"
-              label="Título"
-              defaultValue={task?.title}
-              errorMessage={titleError?.message}
-              ref={titleRef}
-            />
-          </div>
+        {task && (
+          <div className="space-y-6 rounded-xl bg-brand-white p-6">
+            <div>
+              <Input
+                id="title"
+                label="Título"
+                defaultValue={task.title}
+                errorMessage={titleError?.message}
+                ref={titleRef}
+              />
+            </div>
 
-          <div>
-            <TimeSelect
-              defaultValue={task?.time}
-              errorMessage={timeError?.message}
-              ref={timeRef}
-            />
-          </div>
+            <div>
+              <TimeSelect
+                defaultValue={task.time}
+                errorMessage={timeError?.message}
+                ref={timeRef}
+              />
+            </div>
 
-          <div>
-            <Input
-              id="description"
-              label="Descrição"
-              defaultValue={task?.description}
-              errorMessage={descriptionError?.message}
-              ref={decriptionRef}
-            />
+            <div>
+              <Input
+                id="status"
+                label="Status"
+                type="select"
+                defaultValue={task.status || 'not_started'}
+                ref={statusRef}
+              >
+                <option value="not_started">Não iniciada</option>
+                <option value="in_progress">Em progresso</option>
+                <option value="done">Concluída</option>
+              </Input>
+            </div>
+
+            <div>
+              <Input
+                id="description"
+                label="Descrição"
+                defaultValue={task.description}
+                errorMessage={descriptionError?.message}
+                ref={decriptionRef}
+              />
+            </div>
           </div>
-        </div>
+        )}
+
         <div className="flex w-full justify-end gap-3">
           <Button
             size="medium"
