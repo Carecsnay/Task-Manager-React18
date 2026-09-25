@@ -5,35 +5,35 @@
       "title": "Estudar System Design",
       "time": "evening",
       "description": "Finalizar as 4 aulas do treinamento intensivo.",
-      "status": "done"
+      "status": "in_progress"
     },
     {
       "id": "WFKjigITLf0",
       "title": "Estudar React",
-      "time": "morning",
+      "time": "evening",
       "description": "Lorem",
       "status": "in_progress"
     },
     {
       "id": "LnqRpp87F4E",
-      "title": "dsadad",
+      "title": "Um título muito legal",
       "time": "morning",
-      "description": "asdadad",
-      "status": "done"
+      "description": "Uma tarefa muito legal criada com sucesso (bonieky lacerda) mandou lembranças.",
+      "status": "in_progress"
     },
     {
       "id": "mP4_R0s82qw",
       "title": "Tralala",
       "time": "morning",
       "description": "asda",
-      "status": "done"
+      "status": "in_progress"
     },
     {
       "id": "E3QR_3puCTM",
       "title": "Uma tarefa legal",
       "time": "evening",
       "description": "Criada com sucesso",
-      "status": "done"
+      "status": "in_progress"
     },
     {
       "id": "n0seRT166tQ",

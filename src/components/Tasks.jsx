@@ -34,27 +34,30 @@ const Tasks = () => {
     const currentTask = tasks.find((task) => task.id === taskId);
     if (!currentTask) return;
 
-    // 2. Determina o novo status e a mensagem
-    let newStatus = 'not_started';
-    let message = '';
+    const statusTransitions = {
+      not_started: {
+        newStatus: 'in_progress',
+        message: 'A tarefa está em progresso!',
+      },
+      in_progress: {
+        newStatus: 'done',
+        message: 'A tarefa foi finalizada!',
+      },
+      done: {
+        newStatus: 'not_started',
+        message: 'Tarefa marcada como não iniciada!',
+      },
+    };
 
-    if (currentTask.status === 'not_started') {
-      newStatus = 'in_progress';
-      message = 'A tarefa está em progresso!';
-    } else if (currentTask.status === 'in_progress') {
-      newStatus = 'done';
-      message = 'A tarefa foi finalizada!';
-    } else if (currentTask.status === 'done') {
-      newStatus = 'not_started';
-      message = 'Tarefa marcada como não iniciada!';
-    }
+    const transition = statusTransitions[currentTask.status];
+    if (!transition) return;
+
+    const { newStatus, message } = transition;
 
     try {
       const response = await fetch(`http://localhost:8000/tasks/${taskId}`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),
       });
 
