@@ -5,14 +5,42 @@
       "title": "Estudar System Design",
       "time": "morning",
       "description": "Finalizar as 4 aulas do treinamento intensivo.",
-      "status": "not_started"
+      "status": "in_progress"
     },
     {
       "id": "WFKjigITLf0",
       "title": "Estudar React",
       "time": "morning",
       "description": "Lorem",
-      "status": "not_started"
+      "status": "in_progress"
+    },
+    {
+      "id": "LnqRpp87F4E",
+      "title": "dsadad",
+      "time": "morning",
+      "description": "asdadad",
+      "status": "done"
+    },
+    {
+      "id": "mP4_R0s82qw",
+      "title": "dsadad",
+      "time": "afternoon",
+      "description": "asda",
+      "status": "done"
+    },
+    {
+      "id": "E3QR_3puCTM",
+      "title": "Uma tarefa legal",
+      "time": "evening",
+      "description": "Criada com sucesso",
+      "status": "done"
+    },
+    {
+      "id": "n0seRT166tQ",
+      "title": "tralala",
+      "time": "afternoon",
+      "description": "dsa",
+      "status": "in_progress"
     }
   ],
   "$schema": "./node_modules/json-server/schema.json"

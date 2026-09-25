@@ -2,7 +2,7 @@ import PropTypes from 'prop-types';
 import { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { CSSTransition } from 'react-transition-group';
-import { v4 } from 'uuid';
+import { v4 as uuidv4 } from 'uuid';
 
 import { LoaderIcon } from '../assets/icons';
 import './AddTaskDialog.css';
@@ -19,17 +19,36 @@ const AddTaskDialog = ({
   const [errors, setErrors] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Refs para acessar os elementos HTML
+  const nodeRef = useRef(null);
+  const titleRef = useRef(null);
+  const decriptionRef = useRef(null);
+  const timeRef = useRef(null);
+
+  // Função para limpar os inputs e erros
+  const clearForm = () => {
+    setErrors([]);
+    if (titleRef.current) titleRef.current.value = '';
+    if (decriptionRef.current) decriptionRef.current.value = '';
+    if (timeRef.current) timeRef.current.value = '';
+  };
+
+  const handleCloseAndReset = () => {
+    clearForm();
+    handleClose();
+  };
+
   const handleSaveClick = async () => {
     setIsLoading(true);
     const newErrors = [];
-    const title = titleRef.current.value;
-    const description = decriptionRef.current.value;
-    const time = timeRef.current.value;
+    const title = titleRef.current?.value || '';
+    const description = decriptionRef.current?.value || '';
+    const time = timeRef.current?.value || '';
 
     if (!title.trim()) {
       newErrors.push({
         inputError: 'title',
-        message: 'O campo titulo é obrigatório.',
+        message: 'O campo título é obrigatório.',
       });
     }
 
@@ -50,21 +69,42 @@ const AddTaskDialog = ({
     setErrors(newErrors);
 
     if (newErrors.length > 0) {
-      return setIsLoading(false);
-    }
-    const task = { id: v4(), title, time, description, status: 'not_started' };
-    const response = await fetch('http://localhost:8000/tasks', {
-      method: 'POST',
-      body: JSON.stringify(task),
-    });
-
-    if (!response.ok) {
       setIsLoading(false);
-      return onSubmitError();
+      return;
     }
-    setIsLoading(false);
-    onSubmitSuccess(task);
-    handleClose();
+
+    const newTask = {
+      id: uuidv4(),
+      title,
+      time,
+      description,
+      status: 'not_started',
+    };
+
+    try {
+      const response = await fetch('http://localhost:8000/tasks', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newTask),
+      });
+
+      if (!response.ok) {
+        setIsLoading(false);
+        return onSubmitError();
+      }
+
+      const savedTask = await response.json();
+
+      setIsLoading(false);
+      clearForm();
+      onSubmitSuccess(savedTask);
+      handleClose();
+    } catch (error) {
+      setIsLoading(false);
+      onSubmitError();
+    }
   };
 
   const titleError = errors.find((error) => error.inputError === 'title');
@@ -72,12 +112,6 @@ const AddTaskDialog = ({
   const descriptionError = errors.find(
     (error) => error.inputError === 'description'
   );
-
-  //usado para acessar o elemento HTML da DOM.
-  const nodeRef = useRef();
-  const titleRef = useRef();
-  const decriptionRef = useRef();
-  const timeRef = useRef();
 
   return (
     <CSSTransition
@@ -87,12 +121,12 @@ const AddTaskDialog = ({
       classNames="add-task-dialog"
       unmountOnExit
     >
-      <>
+      <div>
         {createPortal(
           <div
             ref={nodeRef}
             className="fixed bottom-0 left-0 top-0 flex h-screen w-screen flex-col items-center justify-center backdrop-blur-sm"
-            onClick={handleClose}
+            onClick={handleCloseAndReset}
           >
             <div
               className="w-[336px] rounded-xl border-2 bg-white p-5 text-center shadow"
@@ -115,7 +149,7 @@ const AddTaskDialog = ({
                   errorMessage={titleError?.message}
                   disabled={isLoading}
                   ref={titleRef}
-                ></Input>
+                />
 
                 <TimeSelect errorMessage={timeError?.message} ref={timeRef} />
 
@@ -126,14 +160,14 @@ const AddTaskDialog = ({
                   disabled={isLoading}
                   errorMessage={descriptionError?.message}
                   ref={decriptionRef}
-                ></Input>
+                />
 
                 <div className="mt-4 flex items-center justify-center gap-3">
                   <Button
                     className="w-full"
                     size="medium"
                     color="secondary"
-                    onClick={handleClose}
+                    onClick={handleCloseAndReset}
                   >
                     Cancelar
                   </Button>
@@ -154,7 +188,7 @@ const AddTaskDialog = ({
           </div>,
           document.body
         )}
-      </>
+      </div>
     </CSSTransition>
   );
 };
@@ -165,4 +199,5 @@ AddTaskDialog.propTypes = {
   onSubmitSuccess: PropTypes.func.isRequired,
   onSubmitError: PropTypes.func.isRequired,
 };
+
 export default AddTaskDialog;
