@@ -40,7 +40,7 @@
       "title": "tralala",
       "time": "afternoon",
       "description": "dsa",
-      "status": "in_progress"
+      "status": "not_started"
     }
   ],
   "$schema": "./node_modules/json-server/schema.json"

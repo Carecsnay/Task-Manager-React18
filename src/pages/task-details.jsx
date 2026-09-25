@@ -71,7 +71,7 @@ const TaskDetailsPage = () => {
 
     const response = await fetch(`http://localhost:8000/tasks/${task.id}`, {
       method: 'PATCH',
-      body: JSON.stringify({ title, time, description, status: task.status }),
+      body: JSON.stringify({ title, time, description }),
     });
 
     if (!response.ok) {

@@ -30,27 +30,49 @@ const Tasks = () => {
   const afternoonTasks = tasks.filter((task) => task.time === 'afternoon');
   const eveningTasks = tasks.filter((task) => task.time === 'evening');
 
-  const handleTaskCheckBoxClick = (taskId) => {
-    const newTasks = tasks.map((task) => {
-      if (task.id !== taskId) return task;
+  const handleTaskCheckBoxClick = async (taskId) => {
+    const currentTask = tasks.find((task) => task.id === taskId);
+    if (!currentTask) return;
 
-      if (task.status === 'done') {
-        toast.success('Tarefa não iniciada!');
-        return { ...task, status: 'not_started' };
+    // 2. Determina o novo status e a mensagem
+    let newStatus = 'not_started';
+    let message = '';
+
+    if (currentTask.status === 'not_started') {
+      newStatus = 'in_progress';
+      message = 'A tarefa está em progresso!';
+    } else if (currentTask.status === 'in_progress') {
+      newStatus = 'done';
+      message = 'A tarefa foi finalizada!';
+    } else if (currentTask.status === 'done') {
+      newStatus = 'not_started';
+      message = 'Tarefa marcada como não iniciada!';
+    }
+
+    try {
+      const response = await fetch(`http://localhost:8000/tasks/${taskId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (!response.ok) {
+        toast.error('Erro ao atualizar o status da tarefa.');
+        return;
       }
 
-      if (task.status === 'not_started') {
-        toast.success('A tarefa está em progresso!');
-        return { ...task, status: 'in_progress' };
-      }
+      const updatedTask = await response.json();
 
-      if (task.status === 'in_progress') {
-        toast.success('A tarefa foi finalizada!');
-        return { ...task, status: 'done' };
-      }
-      return task;
-    });
-    setTasks(newTasks);
+      setTasks((prevTasks) =>
+        prevTasks.map((task) => (task.id === taskId ? updatedTask : task))
+      );
+
+      toast.success(message);
+    } catch (error) {
+      toast.error('Erro de conexão ao atualizar tarefa.');
+    }
   };
 
   const onTaskSubmitSuccess = async (task) => {
