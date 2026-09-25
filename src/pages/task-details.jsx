@@ -205,6 +205,8 @@ const TaskDetailsPage = () => {
               <Input
                 id="description"
                 label="Descrição"
+                type="textarea"
+                rows={10}
                 defaultValue={task.description}
                 errorMessage={descriptionError?.message}
                 ref={decriptionRef}

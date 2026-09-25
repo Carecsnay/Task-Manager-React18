@@ -8,6 +8,38 @@ const Input = forwardRef(
     const inputStyles =
       'border-dark-gray rounded-lg border border-solid px-4 py-3 text-sm outline-brand-primary bg-white';
 
+    const renderInputElement = () => {
+      if (type === 'select') {
+        return (
+          <select id={id} className={inputStyles} ref={ref} {...rest}>
+            {children}
+          </select>
+        );
+      }
+
+      if (type === 'textarea') {
+        return (
+          <textarea
+            id={id}
+            className={`${inputStyles} min-h-[100px] resize-none`}
+            ref={ref}
+            {...rest}
+          />
+        );
+      }
+
+      return (
+        <input
+          id={id}
+          type={type}
+          className={inputStyles}
+          ref={ref}
+          autoComplete="off"
+          {...rest}
+        />
+      );
+    };
+
     return (
       <div className="flex flex-col space-y-1 text-start">
         <InputLabel
@@ -17,20 +49,7 @@ const Input = forwardRef(
           {label}
         </InputLabel>
 
-        {type === 'select' ? (
-          <select id={id} className={inputStyles} ref={ref} {...rest}>
-            {children}
-          </select>
-        ) : (
-          <input
-            id={id}
-            type={type}
-            className={inputStyles}
-            ref={ref}
-            autoComplete="off"
-            {...rest}
-          />
-        )}
+        {renderInputElement()}
 
         {errorMessage && <InputErrorMessage>{errorMessage}</InputErrorMessage>}
       </div>
