@@ -71,7 +71,7 @@ const TaskDetailsPage = () => {
 
     const response = await fetch(`http://localhost:8000/tasks/${task.id}`, {
       method: 'PATCH',
-      body: JSON.stringify({ title, time, description }),
+      body: JSON.stringify({ title, time, description, status: task.status }),
     });
 
     if (!response.ok) {
@@ -90,7 +90,7 @@ const TaskDetailsPage = () => {
   };
 
   const handleDeleteClick = async () => {
-    const response = await fetch(`http://localhost:8000/${task.id}`, {
+    const response = await fetch(`http://localhost:8000/tasks/${taskId}`, {
       method: 'DELETE',
     });
 
