@@ -1,7 +1,13 @@
-import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 
-import { ArrowLeftIcon, ChevronRightIcon, TrashIcon } from '../assets/icons';
+import { toast } from 'sonner';
+import {
+  ArrowLeftIcon,
+  ChevronRightIcon,
+  LoaderIcon,
+  TrashIcon,
+} from '../assets/icons';
 import Button from '../components/Button';
 import Input from '../components/Input';
 import Sidebar from '../components/Sidebar';
@@ -10,9 +16,77 @@ import TimeSelect from '../components/TimeSelect';
 const TaskDetailsPage = () => {
   const { taskId } = useParams();
   const [task, setTask] = useState();
+  const [isLoading, setIsLoading] = useState();
+  const [errors, setErrors] = useState([]);
+
+  const titleRef = useRef();
+  const decriptionRef = useRef();
+  const timeRef = useRef();
+
   const navigate = useNavigate();
+
+  const titleError = errors.find((error) => error.inputError === 'title');
+  const timeError = errors.find((error) => error.inputError === 'time');
+  const descriptionError = errors.find(
+    (error) => error.inputError === 'description'
+  );
+
   const handleBackClick = () => {
     navigate(-1);
+  };
+
+  const handleSaveClick = async () => {
+    setIsLoading(true);
+    const newErrors = [];
+    const title = titleRef.current.value;
+    const time = timeRef.current.value;
+    const description = decriptionRef.current.value;
+
+    if (!title.trim()) {
+      newErrors.push({
+        inputError: 'title',
+        message: 'O campo titulo é obrigatório.',
+      });
+    }
+
+    if (!time.trim()) {
+      newErrors.push({
+        inputError: 'time',
+        message: 'O campo horário é obrigatório.',
+      });
+    }
+
+    if (!description.trim()) {
+      newErrors.push({
+        inputError: 'description',
+        message: 'O campo descrição é obrigatório.',
+      });
+    }
+
+    setErrors(newErrors);
+
+    if (newErrors.length > 0) {
+      return setIsLoading(false);
+    }
+
+    const response = await fetch(`http://localhost:8000/tasks/${task.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ title, time, description }),
+    });
+
+    if (!response.ok) {
+      toast.success('Ocorreu um erro ao salvar a tarefa!');
+      return setIsLoading(false);
+    }
+
+    setIsLoading(false);
+    const newTask = await response.json();
+    setTask(newTask);
+    toast.success('Tarefa atualizada com sucesso!');
+
+    setTimeout(() => {
+      navigate(-1);
+    }, 1000);
   };
 
   useEffect(() => {
@@ -42,12 +116,9 @@ const TaskDetailsPage = () => {
               <ArrowLeftIcon />
             </button>
             <div className="flex items-center gap-1 text-xs">
-              <span
-                className="cursor-pointer text-brand-text-gray"
-                onClick={handleBackClick}
-              >
+              <Link className="cursor-pointer text-brand-text-gray" to="/">
                 Minhas tarefas
-              </span>
+              </Link>
               <ChevronRightIcon className="text-brand-text-gray" />
               <span className="font-semibold text-brand-primary">
                 {task?.title}
@@ -67,26 +138,49 @@ const TaskDetailsPage = () => {
         {/* dados da tarefa */}
         <div className="space-y-6 rounded-xl bg-brand-white p-6">
           <div>
-            <Input id="title" label="Título" value={task?.title} />
+            <Input
+              id="title"
+              label="Título"
+              defaultValue={task?.title}
+              errorMessage={titleError?.message}
+              ref={titleRef}
+            />
           </div>
 
           <div>
-            <TimeSelect value={task?.time} />
+            <TimeSelect
+              defaultValue={task?.time}
+              errorMessage={timeError?.message}
+              ref={timeRef}
+            />
           </div>
 
           <div>
             <Input
               id="description"
               label="Descrição"
-              value={task?.description}
+              defaultValue={task?.description}
+              errorMessage={descriptionError?.message}
+              ref={decriptionRef}
             />
           </div>
         </div>
         <div className="flex w-full justify-end gap-3">
-          <Button size="large" color="secondary">
+          <Button
+            size="medium"
+            color="secondary"
+            disabled={isLoading}
+            onClick={handleBackClick}
+          >
             Cancelar
           </Button>
-          <Button size="large" color="primary">
+          <Button
+            size="medium"
+            color="primary"
+            disabled={isLoading}
+            onClick={handleSaveClick}
+          >
+            {isLoading && <LoaderIcon className="h-6 w-6 animate-spin" />}
             Salvar
           </Button>
         </div>
