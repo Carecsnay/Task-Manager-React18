@@ -94,13 +94,13 @@ const AddTaskDialog = ({
         setIsLoading(false);
         return onSubmitError();
       }
-
-      const savedTask = await response.json();
-
-      setIsLoading(false);
-      clearForm();
-      onSubmitSuccess(savedTask);
-      handleClose();
+      setTimeout(async () => {
+        const savedTask = await response.json();
+        setIsLoading(false);
+        clearForm();
+        onSubmitSuccess(savedTask);
+        handleClose();
+      }, 1000);
     } catch (error) {
       setIsLoading(false);
       onSubmitError();

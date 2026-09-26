@@ -79,18 +79,16 @@ const TaskDetailsPage = () => {
         },
         body: JSON.stringify({ title, time, description, status }),
       });
-
       if (!response.ok) {
         toast.error('Ocorreu um erro ao atualizar a tarefa!');
         return setIsLoading(false);
       }
 
-      setIsLoading(false);
-      const newTask = await response.json();
-      setTask(newTask);
-      toast.success('Tarefa atualizada com sucesso!');
-
-      setTimeout(() => {
+      setTimeout(async () => {
+        setIsLoading(false);
+        const newTask = await response.json();
+        setTask(newTask);
+        toast.success('Tarefa atualizada com sucesso!');
         navigate(-1);
       }, 1000);
     } catch (error) {
