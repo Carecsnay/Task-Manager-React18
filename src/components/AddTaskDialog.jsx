@@ -8,6 +8,7 @@ import { LoaderIcon } from '../assets/icons';
 import './AddTaskDialog.css';
 import Button from './Button';
 import Input from './Input';
+import InputLabel from './InputLabel';
 import TimeSelect from './TimeSelect';
 
 const AddTaskDialog = ({
@@ -24,13 +25,14 @@ const AddTaskDialog = ({
   const titleRef = useRef(null);
   const decriptionRef = useRef(null);
   const timeRef = useRef(null);
+  const statusRef = useRef(null);
 
-  // Função para limpar os inputs e erros
   const clearForm = () => {
     setErrors([]);
     if (titleRef.current) titleRef.current.value = '';
     if (decriptionRef.current) decriptionRef.current.value = '';
     if (timeRef.current) timeRef.current.value = '';
+    if (statusRef.current) statusRef.current.value = 'not_started';
   };
 
   const handleCloseAndReset = () => {
@@ -44,6 +46,7 @@ const AddTaskDialog = ({
     const title = titleRef.current?.value || '';
     const description = decriptionRef.current?.value || '';
     const time = timeRef.current?.value || '';
+    const status = statusRef.current?.value || 'not_started';
 
     if (!title.trim()) {
       newErrors.push({
@@ -78,7 +81,7 @@ const AddTaskDialog = ({
       title,
       time,
       description,
-      status: 'not_started',
+      status,
     };
 
     try {
@@ -152,6 +155,26 @@ const AddTaskDialog = ({
                 />
 
                 <TimeSelect errorMessage={timeError?.message} ref={timeRef} />
+
+                <div className="flex flex-col space-y-1 text-start">
+                  <InputLabel
+                    htmlFor="status"
+                    className="mt-4 text-sm font-semibold text-brand-dark-blue"
+                  >
+                    Status
+                  </InputLabel>
+                  <select
+                    id="status"
+                    ref={statusRef}
+                    defaultValue="not_started"
+                    disabled={isLoading}
+                    className="border-dark-gray rounded-lg border border-solid bg-white px-4 py-3 text-sm outline-brand-primary"
+                  >
+                    <option value="not_started">Não iniciada</option>
+                    <option value="in_progress">Em progresso</option>
+                    <option value="done">Concluída</option>
+                  </select>
+                </div>
 
                 <Input
                   id="description"
