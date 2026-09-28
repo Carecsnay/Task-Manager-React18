@@ -227,6 +227,7 @@ const TaskDetailsPage = () => {
             color="primary"
             disabled={isLoading}
             onClick={handleSaveClick}
+            className={'w-24'}
           >
             {isLoading && <LoaderIcon className="h-6 w-6 animate-spin" />}
             Salvar
