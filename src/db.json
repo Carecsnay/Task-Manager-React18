@@ -3,30 +3,23 @@
     {
       "id": "O0Ker5kz-j8",
       "title": "Estudar System Design",
-      "time": "evening",
+      "time": "afternoon",
       "description": "Finalizar as 4 aulas do treinamento intensivo.",
       "status": "in_progress"
     },
     {
       "id": "WFKjigITLf0",
       "title": "Estudar React",
-      "time": "afternoon",
-      "description": "Lorem",
-      "status": "done"
+      "time": "morning",
+      "description": "Uma descrição legal inserida na tarefa.",
+      "status": "not_started"
     },
     {
       "id": "E3QR_3puCTM",
       "title": "Uma tarefa legal",
       "time": "evening",
       "description": "Criada com sucesso",
-      "status": "in_progress"
-    },
-    {
-      "id": "n0seRT166tQ",
-      "title": "Tarefa da manhã",
-      "time": "morning",
-      "description": "dsas",
-      "status": "not_started"
+      "status": "done"
     }
   ],
   "$schema": "./node_modules/json-server/schema.json"
