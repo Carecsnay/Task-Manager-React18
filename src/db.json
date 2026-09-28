@@ -10,9 +10,9 @@
     {
       "id": "WFKjigITLf0",
       "title": "Estudar React",
-      "time": "evening",
+      "time": "afternoon",
       "description": "Lorem",
-      "status": "in_progress"
+      "status": "done"
     },
     {
       "id": "E3QR_3puCTM",
@@ -23,10 +23,10 @@
     },
     {
       "id": "n0seRT166tQ",
-      "title": "tralala",
-      "time": "afternoon",
+      "title": "Tarefa da manhã",
+      "time": "morning",
       "description": "dsas",
-      "status": "in_progress"
+      "status": "not_started"
     }
   ],
   "$schema": "./node_modules/json-server/schema.json"
