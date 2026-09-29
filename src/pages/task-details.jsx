@@ -156,7 +156,7 @@ const TaskDetailsPage = () => {
                 <TimeSelect
                   defaultValue={task.time}
                   {...register('time', {
-                    required: 'O período da tarefaé obrigatório.',
+                    required: 'O período da tarefa é obrigatório.',
                     validate: (value) => {
                       if (!value.trim())
                         return 'O período da tarefa não pode ser vazio.';
