@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types';
-import { useRef, useState } from 'react';
+import { useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { useForm } from 'react-hook-form';
 import { CSSTransition } from 'react-transition-group';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -17,71 +18,38 @@ const AddTaskDialog = ({
   onSubmitSuccess,
   onSubmitError,
 }) => {
-  const [errors, setErrors] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-
-  // Refs para acessar os elementos HTML
   const nodeRef = useRef(null);
-  const titleRef = useRef(null);
-  const decriptionRef = useRef(null);
-  const timeRef = useRef(null);
-  const statusRef = useRef(null);
-
-  const clearForm = () => {
-    setErrors([]);
-    if (titleRef.current) titleRef.current.value = '';
-    if (decriptionRef.current) decriptionRef.current.value = '';
-    if (timeRef.current) timeRef.current.value = '';
-    if (statusRef.current) statusRef.current.value = 'not_started';
-  };
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm({
+    defaultValues: {
+      id: '',
+      title: '',
+      time: 'morning',
+      description: '',
+      status: 'not_started',
+    },
+  });
 
   const handleCloseAndReset = () => {
-    clearForm();
     handleClose();
+    reset();
   };
 
-  const handleSaveClick = async () => {
-    setIsLoading(true);
-    const newErrors = [];
-    const title = titleRef.current?.value || '';
-    const description = decriptionRef.current?.value || '';
-    const time = timeRef.current?.value || '';
-    const status = statusRef.current?.value || 'not_started';
+  const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-    if (!title.trim()) {
-      newErrors.push({
-        inputError: 'title',
-        message: 'O campo título é obrigatório.',
-      });
-    }
-
-    if (!time.trim()) {
-      newErrors.push({
-        inputError: 'time',
-        message: 'O campo horário é obrigatório.',
-      });
-    }
-
-    if (!description.trim()) {
-      newErrors.push({
-        inputError: 'description',
-        message: 'O campo descrição é obrigatório.',
-      });
-    }
-
-    setErrors(newErrors);
-
-    if (newErrors.length > 0) {
-      setIsLoading(false);
-      return;
-    }
+  const handleSaveClick = async (data) => {
+    const { title, time, status, description } = data; //opcional, pois o "data" já retorna a estrutura completinha
 
     const newTask = {
       id: uuidv4(),
       title,
       time,
-      description,
       status,
+      description,
     };
 
     try {
@@ -94,46 +62,36 @@ const AddTaskDialog = ({
       });
 
       if (!response.ok) {
-        setIsLoading(false);
         return onSubmitError();
       }
-      setTimeout(async () => {
-        const savedTask = await response.json();
-        setIsLoading(false);
-        clearForm();
-        onSubmitSuccess(savedTask);
-        handleClose();
-      }, 1000);
+
+      await delay(1000);
+      const savedTask = await response.json();
+      onSubmitSuccess(savedTask);
+      handleClose();
+      reset();
     } catch (error) {
-      setIsLoading(false);
       onSubmitError();
     }
   };
 
-  const titleError = errors.find((error) => error.inputError === 'title');
-  const timeError = errors.find((error) => error.inputError === 'time');
-  const descriptionError = errors.find(
-    (error) => error.inputError === 'description'
-  );
-
   return (
     <CSSTransition
       in={isOpen}
-      nodeRef={nodeRef}
       timeout={500}
       classNames="add-task-dialog"
       unmountOnExit
+      nodeRef={nodeRef}
     >
-      <div>
+      <div ref={nodeRef}>
         {createPortal(
           <div
-            ref={nodeRef}
             className="fixed bottom-0 left-0 top-0 flex h-screen w-screen flex-col items-center justify-center backdrop-blur-sm"
-            onClick={handleCloseAndReset}
+            onMouseDown={handleCloseAndReset}
           >
             <div
               className="w-[336px] rounded-xl border-2 bg-white p-5 text-center shadow"
-              onClick={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
             >
               <div>
                 <h2 className="text-lg font-semibold text-brand-dark-blue">
@@ -144,69 +102,93 @@ const AddTaskDialog = ({
                 </p>
               </div>
 
-              <div className="flex flex-col">
-                <Input
-                  id="title"
-                  label="Título"
-                  placeholder="Título da tarefa"
-                  errorMessage={titleError?.message}
-                  disabled={isLoading}
-                  ref={titleRef}
-                />
+              <form onSubmit={handleSubmit(handleSaveClick)}>
+                <div className="flex flex-col">
+                  <Input
+                    id="title"
+                    label="Título"
+                    placeholder="Título da tarefa"
+                    errorMessage={errors?.title?.message}
+                    disabled={isSubmitting}
+                    {...register('title', {
+                      required: 'O título da tarefa é obrigatório.',
+                      validate: (value) => {
+                        if (!value.trim())
+                          return 'O título da tarefa não pode ser vazio.';
+                      },
+                    })}
+                  />
 
-                <TimeSelect errorMessage={timeError?.message} ref={timeRef} />
+                  <TimeSelect
+                    errorMessage={errors?.time?.message}
+                    {...register('time', {
+                      required: 'O período da tarefa é obrigatório.',
+                      validate: (value) => {
+                        if (!value.trim())
+                          return 'O período da tarefa não pode ser vazio.';
+                      },
+                    })}
+                  />
 
-                <div className="flex flex-col space-y-1 text-start">
-                  <InputLabel
-                    htmlFor="status"
-                    className="mt-4 text-sm font-semibold text-brand-dark-blue"
-                  >
-                    Status
-                  </InputLabel>
-                  <select
-                    id="status"
-                    ref={statusRef}
-                    defaultValue="not_started"
-                    disabled={isLoading}
-                    className="border-dark-gray rounded-lg border border-solid bg-white px-4 py-3 text-sm outline-brand-primary"
-                  >
-                    <option value="not_started">Não iniciada</option>
-                    <option value="in_progress">Em progresso</option>
-                    <option value="done">Concluída</option>
-                  </select>
+                  <div className="flex flex-col space-y-1 text-start">
+                    <InputLabel
+                      htmlFor="status"
+                      className="mt-4 text-sm font-semibold text-brand-dark-blue"
+                    >
+                      Status
+                    </InputLabel>
+                    <select
+                      id="status"
+                      defaultValue="not_started"
+                      disabled={isSubmitting}
+                      className="border-dark-gray rounded-lg border border-solid bg-white px-4 py-3 text-sm outline-brand-primary"
+                      {...register('status', {
+                        required: 'O período da tarefaé obrigatório.',
+                        validate: (value) => {
+                          if (!value.trim())
+                            return 'O período da tarefa não pode ser vazio.';
+                        },
+                      })}
+                    >
+                      <option value="not_started">Não iniciada</option>
+                      <option value="in_progress">Em progresso</option>
+                      <option value="done">Concluída</option>
+                    </select>
+                  </div>
+
+                  <Input
+                    id="description"
+                    label="Descrição"
+                    placeholder="Descreva a tarefa"
+                    errorMessage={errors?.description?.message}
+                    {...register('description', {
+                      required: 'A descrição da tarefa é obrigatória.',
+                      validate: (value) => {
+                        if (!value.trim())
+                          return 'A descrição da tarefa não pode ser vazia.';
+                      },
+                    })}
+                  />
+
+                  <div className="mt-4 flex items-center justify-center gap-3">
+                    <Button
+                      type="button"
+                      className="w-full"
+                      size="medium"
+                      color="secondary"
+                      onClick={handleCloseAndReset}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button className="w-full" size="medium" type="submit">
+                      {isSubmitting && (
+                        <LoaderIcon className="h-6 w-6 animate-spin" />
+                      )}
+                      Salvar
+                    </Button>
+                  </div>
                 </div>
-
-                <Input
-                  id="description"
-                  label="Descrição"
-                  placeholder="Descreva a tarefa"
-                  disabled={isLoading}
-                  errorMessage={descriptionError?.message}
-                  ref={decriptionRef}
-                />
-
-                <div className="mt-4 flex items-center justify-center gap-3">
-                  <Button
-                    className="w-full"
-                    size="medium"
-                    color="secondary"
-                    onClick={handleCloseAndReset}
-                  >
-                    Cancelar
-                  </Button>
-                  <Button
-                    className="w-full"
-                    size="medium"
-                    onClick={handleSaveClick}
-                    disabled={isLoading}
-                  >
-                    {isLoading && (
-                      <LoaderIcon className="h-6 w-6 animate-spin" />
-                    )}
-                    Salvar
-                  </Button>
-                </div>
-              </div>
+              </form>
             </div>
           </div>,
           document.body
