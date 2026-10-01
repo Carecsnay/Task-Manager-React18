@@ -17,12 +17,14 @@ const Tasks = () => {
   //atualiza parcialmente o cache de data com o cache mais atual salvo local.
   const queryClient = useQueryClient();
   const { data: tasks } = useQuery({
-    queryKey: ['tasks'], //id único, recomenda-se colocar em colchetes
+    //id único, recomenda-se colocar em colchetes
+    queryKey: ['tasks'],
     //função chamada assim que o useQuery é "montado" similar ao useEffect.
     queryFn: async () => {
       const response = await fetch('http://localhost:8000/tasks');
       const tasks = await response.json();
-      return tasks; //data recebe o que eu retornar aqui.
+      //data recebe o que eu retornar aqui.
+      return tasks;
     },
   });
   const [dialogIsOpen, setDialogIsOpen] = useState(false);
@@ -81,26 +83,6 @@ const Tasks = () => {
     }
   };
 
-  const onTaskSubmitSuccess = async (task) => {
-    // atualizar o cache da queryKey
-    await queryClient.setQueriesData(['tasks'], (currentTasks) => {
-      return [...currentTasks, task];
-    });
-    toast.success('Tarefa adicionada com sucesso!');
-  };
-
-  const onTaskSubmitError = () => {
-    return toast.error('Não foi possível adicionar a tarefa, tente novamente!');
-  };
-
-  const onDeleteTaskSuccess = async (taskId) => {
-    //atualizar o cache da queryKey filter
-    await queryClient.setQueriesData('tasks', (currentTasks) => {
-      return currentTasks.filter((task) => task.id !== taskId);
-    });
-    toast.success('A tarefa foi removida com sucesso!');
-  };
-
   const handleCleanTasks = async () => {
     await Promise.all(
       tasks.map((task) =>
@@ -128,8 +110,6 @@ const Tasks = () => {
           <AddTaskDialog
             isOpen={dialogIsOpen}
             handleClose={() => setDialogIsOpen(false)}
-            onSubmitSuccess={onTaskSubmitSuccess}
-            onSubmitError={onTaskSubmitError}
           />
         </div>
       </div>
@@ -147,7 +127,6 @@ const Tasks = () => {
               key={task.id}
               task={task}
               handleCheckboxClick={handleTaskCheckBoxClick}
-              onDeleteClick={onDeleteTaskSuccess}
             />
           ))}
         </div>
@@ -164,7 +143,6 @@ const Tasks = () => {
               key={task.id}
               task={task}
               handleCheckboxClick={handleTaskCheckBoxClick}
-              onDeleteClick={onDeleteTaskSuccess}
             />
           ))}
         </div>
@@ -181,7 +159,6 @@ const Tasks = () => {
               key={task.id}
               task={task}
               handleCheckboxClick={handleTaskCheckBoxClick}
-              onDeleteClick={onDeleteTaskSuccess}
             />
           ))}
         </div>

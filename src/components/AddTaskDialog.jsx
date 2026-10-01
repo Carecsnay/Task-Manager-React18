@@ -1,10 +1,11 @@
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import PropTypes from 'prop-types';
 import { useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useForm } from 'react-hook-form';
 import { CSSTransition } from 'react-transition-group';
-import { v4 as uuidv4 } from 'uuid';
 
+import { toast } from 'sonner';
 import { LoaderIcon } from '../assets/icons';
 import './AddTaskDialog.css';
 import Button from './Button';
@@ -12,12 +13,21 @@ import Input from './Input';
 import InputLabel from './InputLabel';
 import TimeSelect from './TimeSelect';
 
-const AddTaskDialog = ({
-  isOpen,
-  handleClose,
-  onSubmitSuccess,
-  onSubmitError,
-}) => {
+const AddTaskDialog = ({ isOpen, handleClose }) => {
+  const queryClient = useQueryClient();
+  const { mutate } = useMutation({
+    mutationKey: ['addTask'],
+    mutationFn: async (newTask) => {
+      const response = await fetch('http://localhost:8000/tasks', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newTask),
+      });
+      return response.json();
+    },
+  });
   const nodeRef = useRef(null);
   const {
     register,
@@ -39,13 +49,10 @@ const AddTaskDialog = ({
     reset();
   };
 
-  const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
   const handleSaveClick = async (data) => {
-    const { title, time, status, description } = data; //opcional, pois o "data" já retorna a estrutura completinha
+    const { title, time, status, description } = data;
 
-    const newTask = {
-      id: uuidv4(),
+    const newTaskData = {
       title,
       time,
       status,
@@ -53,25 +60,21 @@ const AddTaskDialog = ({
     };
 
     try {
-      const response = await fetch('http://localhost:8000/tasks', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      mutate(newTaskData, {
+        onSuccess: (savedTask) => {
+          queryClient.setQueryData(['tasks'], (currentTasks) => {
+            return [...currentTasks, savedTask];
+          });
+
+          handleCloseAndReset();
+          toast.success('Tarefa adicionada com sucesso!');
         },
-        body: JSON.stringify(newTask),
+        onError: () => {
+          toast.error('Erro ao adicionar uma nova tarefa.');
+        },
       });
-
-      if (!response.ok) {
-        return onSubmitError();
-      }
-
-      await delay(1000);
-      const savedTask = await response.json();
-      onSubmitSuccess(savedTask);
-      handleClose();
-      reset();
     } catch (error) {
-      onSubmitError();
+      toast.error('Erro ao adicionar uma nova tarefa.');
     }
   };
 
@@ -201,8 +204,6 @@ const AddTaskDialog = ({
 AddTaskDialog.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   handleClose: PropTypes.func.isRequired,
-  onSubmitSuccess: PropTypes.func.isRequired,
-  onSubmitError: PropTypes.func.isRequired,
 };
 
 export default AddTaskDialog;
