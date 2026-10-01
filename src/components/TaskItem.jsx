@@ -1,5 +1,6 @@
+import { useMutation, useQueryClient } from '@tanstack/react-query'; // Importe o useQueryClient
 import PropTypes from 'prop-types';
-import { memo, useState } from 'react';
+import { memo } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { CheckIcon, DetailsIcon, LoaderIcon, TrashIcon } from '../assets/icons';
@@ -11,24 +12,41 @@ const statusVariants = {
   not_started: 'bg-brand-dark-blue/10 text-brand-dark-blue',
 };
 
-const TaskItem = ({ task, handleCheckboxClick, onDeleteClick }) => {
+const TaskItem = ({ task, handleCheckboxClick }) => {
+  const queryClient = useQueryClient();
+  const { mutate, isPending } = useMutation({
+    mutationKey: ['deleteTask', task.id],
+    mutationFn: async () => {
+      const response = await fetch(`http://localhost:8000/tasks/${task.id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Erro ao deletar tarefa no servidor.');
+      }
+    },
+  });
+
   const currentVariant =
     statusVariants[task?.status] || statusVariants['not_started'];
 
   const onCheckboxChange = () => handleCheckboxClick(task.id);
-  const [deleteTaskLoading, setDeleteTaskLoading] = useState(false);
 
-  const handleDeleteClick = async () => {
-    setDeleteTaskLoading(true);
-    const response = await fetch(`http://localhost:8000/tasks/${task.id}`, {
-      method: 'DELETE',
+  const handleDeleteClick = () => {
+    mutate(undefined, {
+      onSuccess: () => {
+        //atualiza o cache de outro componente (sem passar prop)
+        queryClient.setQueriesData({ queryKey: ['tasks'] }, (currentTasks) => {
+          if (!currentTasks) return [];
+          return currentTasks.filter((oldTask) => oldTask.id !== task.id);
+        });
+
+        toast.success('A tarefa foi removida com sucesso!');
+      },
+      onError: () => {
+        toast.error('Erro ao deletar tarefa!');
+      },
     });
-    if (!response.ok) {
-      setDeleteTaskLoading(false);
-      return toast.error('Erro ao deletar tarefa, tente novamente!');
-    }
-    onDeleteClick(task.id);
-    setDeleteTaskLoading(false);
   };
 
   return (
@@ -54,12 +72,8 @@ const TaskItem = ({ task, handleCheckboxClick, onDeleteClick }) => {
       </div>
 
       <div className="flex items-center justify-center gap-2">
-        <Button
-          color="ghost"
-          onClick={handleDeleteClick}
-          disabled={deleteTaskLoading}
-        >
-          {deleteTaskLoading ? (
+        <Button color="ghost" onClick={handleDeleteClick} disabled={isPending}>
+          {isPending ? (
             <LoaderIcon className="animate-spin text-brand-dark-gray" />
           ) : (
             <TrashIcon className="opacity-80 hover:text-brand-danger hover:opacity-100" />
@@ -83,7 +97,6 @@ TaskItem.propTypes = {
     status: PropTypes.string.isRequired,
   }).isRequired,
   handleCheckboxClick: PropTypes.func.isRequired,
-  onDeleteClick: PropTypes.func.isRequired,
 };
 
 export default memo(TaskItem);
