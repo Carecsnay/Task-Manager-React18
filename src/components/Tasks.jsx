@@ -17,7 +17,7 @@ const Tasks = () => {
   //atualiza parcialmente o cache de data com o cache mais atual salvo local.
   const queryClient = useQueryClient();
   const { data: tasks } = useQuery({
-    queryKey: 'tasks', //id único
+    queryKey: ['tasks'], //id único, recomenda-se colocar em colchetes
     //função chamada assim que o useQuery é "montado" similar ao useEffect.
     queryFn: async () => {
       const response = await fetch('http://localhost:8000/tasks');
@@ -32,7 +32,7 @@ const Tasks = () => {
   const eveningTasks = tasks?.filter((task) => task.time === 'evening');
 
   const handleTaskCheckBoxClick = async (taskId) => {
-    const currentTask = tasks.find((task) => task.id === taskId);
+    const currentTask = tasks?.find((task) => task.id === taskId);
     if (!currentTask) return;
 
     const statusTransitions = {
@@ -69,19 +69,21 @@ const Tasks = () => {
 
       const updatedTask = await response.json();
 
-      tasks((prevTasks) =>
-        prevTasks.map((task) => (task.id === taskId ? updatedTask : task))
-      );
+      queryClient.setQueryData(['tasks'], (oldTasks = []) => {
+        return oldTasks.map((task) =>
+          task.id === taskId ? updatedTask : task
+        );
+      });
 
       toast.success(message);
     } catch (error) {
-      toast.error('Erro de conexão ao atualizar tarefa.');
+      toast.error('Erro ao atualizar tarefa.');
     }
   };
 
   const onTaskSubmitSuccess = async (task) => {
-    //atualizar o cache da queryKey
-    await queryClient.setQueriesData('tasks', (currentTasks) => {
+    // atualizar o cache da queryKey
+    await queryClient.setQueriesData(['tasks'], (currentTasks) => {
       return [...currentTasks, task];
     });
     toast.success('Tarefa adicionada com sucesso!');
