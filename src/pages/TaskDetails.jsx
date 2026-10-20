@@ -1,106 +1,134 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
 import {
   ArrowLeftIcon,
   ChevronRightIcon,
   LoaderIcon,
   TrashIcon,
 } from '../assets/icons';
-
 import Button from '../components/Button';
 import Input from '../components/Input';
 import Sidebar from '../components/Sidebar';
 import TimeSelect from '../components/TimeSelect';
 
 const TaskDetailsPage = () => {
+  const queryClient = useQueryClient();
   const { taskId } = useParams();
-  const [task, setTask] = useState();
   const navigate = useNavigate();
+
   const {
     register,
     handleSubmit,
     reset,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm();
 
-  useEffect(() => {
-    const fetchTask = async () => {
-      try {
-        const response = await fetch(`http://localhost:8000/tasks/${taskId}`);
-        const data = await response.json();
-        setTask(data);
-
-        //pode passar só o (data) tbm
-        reset({
-          title: data?.title,
-          time: data?.time,
-          status: data?.status,
-          description: data?.description,
-        });
-      } catch (error) {
-        toast.error('Erro ao carregar os dados da tarefa.');
-      }
-    };
-
-    fetchTask();
-  }, [taskId, reset]);
-
-  const handleBackClick = () => {
-    navigate(-1);
-  };
-
   const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-  const handleSaveClick = async (data) => {
-    const { title, time, status, description } = data; //opcional, pois o "data" já retorna a estrutura completinha
 
-    try {
-      const response = await fetch(`http://localhost:8000/tasks/${task.id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ title, time, description, status }), //poderia passar só (data)
+  const { data: task } = useQuery({
+    queryKey: ['task', taskId],
+    queryFn: async () => {
+      const response = await fetch(`http://localhost:8000/tasks/${taskId}`);
+      if (!response.ok) throw new Error('Erro ao buscar tarefa');
+      return await response.json();
+    },
+  });
+
+  // Preenche o formulário quando o task é carregado
+  useEffect(() => {
+    if (task) {
+      reset({
+        title: task.title,
+        time: task.time,
+        status: task.status,
+        description: task.description,
       });
-
-      if (!response.ok) {
-        return toast.error('Ocorreu um erro ao atualizar a tarefa!');
-      }
-
-      await delay(1000);
-
-      const newTask = await response.json();
-      setTask(newTask);
-      toast.success('Tarefa atualizada com sucesso!');
-      navigate(-1);
-    } catch (error) {
-      toast.error('Erro ao conectar ao servidor.');
     }
-  };
+  }, [task, reset]);
 
-  const handleDeleteClick = async () => {
-    try {
+  const { mutate: deleteTask, isPending: deleteTaskisLoading } = useMutation({
+    mutationKey: ['delete', taskId],
+    mutationFn: async () => {
       const response = await fetch(`http://localhost:8000/tasks/${taskId}`, {
         method: 'DELETE',
       });
 
       if (!response.ok) {
-        return toast.error('Ocorreu um erro ao deletar a tarefa!');
+        throw new Error('Erro ao deletar a tarefa');
       }
 
+      return true;
+    },
+    onSuccess: async () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
       toast.success('Tarefa deletada com sucesso!');
-      navigate(-1);
-    } catch (error) {
-      toast.error('Erro ao conectar ao servidor.');
-    }
+      await delay(1000);
+      handleBackClick();
+    },
+    onError: () => {
+      toast.error('Ocorreu um erro ao deletar a tarefa!');
+    },
+  });
+
+  const { mutate: updateTask, isPending: updateTaskIsLoading } = useMutation({
+    mutationKey: ['updateTask', taskId],
+    mutationFn: async (data) => {
+      const response = await fetch(`http://localhost:8000/tasks/${taskId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        throw new Error('Erro ao atualizar a tarefa');
+      }
+
+      return await response.json(); // ✅ Retorna o objeto atualizado
+    },
+    onSuccess: async (updatedTask) => {
+      // Atualiza o cache da lista
+      queryClient.setQueryData(['tasks'], (oldTasks) => {
+        if (!oldTasks) return [];
+        return oldTasks.map((t) => (t.id === taskId ? updatedTask : t));
+      });
+
+      // Força re-fetch para garantir consistência
+      queryClient.invalidateQueries({ queryKey: ['task', taskId] });
+
+      toast.success('Tarefa atualizada com sucesso!');
+      await delay(1000);
+      handleBackClick();
+    },
+    onError: () => {
+      toast.error('Erro ao atualizar tarefa!');
+    },
+  });
+
+  const handleBackClick = () => {
+    navigate(-1);
   };
+
+  const handleDeleteClick = () => {
+    deleteTask();
+  };
+
+  const handleSaveClick = (data) => {
+    updateTask(data);
+  };
+
+  const isWorking = updateTaskIsLoading || deleteTaskisLoading;
 
   return (
     <div className="flex">
       <Sidebar />
       <div className="w-full space-y-6 px-8 py-16">
-        {/* barra do topo */}
+        {/* Barra do topo */}
         <div className="flex w-full justify-between">
           <div>
             <button
@@ -126,6 +154,7 @@ const TaskDetailsPage = () => {
             className="h-fit self-end"
             color="danger"
             onClick={handleDeleteClick}
+            disabled={isWorking}
           >
             <TrashIcon />
             Deletar tarefa
@@ -133,14 +162,13 @@ const TaskDetailsPage = () => {
         </div>
 
         <form onSubmit={handleSubmit(handleSaveClick)}>
-          {/* dados da tarefa */}
+          {/* Dados da tarefa */}
           {task && (
             <div className="space-y-6 rounded-xl bg-brand-white p-6">
               <div>
                 <Input
                   id="title"
                   label="Título"
-                  defaultValue={task.title}
                   {...register('title', {
                     required: 'O título da tarefa é obrigatório.',
                     validate: (value) => {
@@ -154,7 +182,6 @@ const TaskDetailsPage = () => {
 
               <div>
                 <TimeSelect
-                  defaultValue={task.time}
                   {...register('time', {
                     required: 'O período da tarefa é obrigatório.',
                     validate: (value) => {
@@ -171,7 +198,6 @@ const TaskDetailsPage = () => {
                   id="status"
                   label="Status"
                   type="select"
-                  defaultValue={task.status || 'not_started'}
                   {...register('status', {
                     required: 'O status da tarefa é obrigatório.',
                     validate: (value) => {
@@ -193,7 +219,6 @@ const TaskDetailsPage = () => {
                   label="Descrição"
                   type="textarea"
                   rows={10}
-                  defaultValue={task.description}
                   {...register('description', {
                     required: 'A descrição da tarefa é obrigatória.',
                     validate: (value) => {
@@ -207,19 +232,25 @@ const TaskDetailsPage = () => {
             </div>
           )}
 
-          <div className="flex w-full justify-end gap-3">
-            <Button size="medium" color="secondary" onClick={handleBackClick}>
+          <div className="mt-6 flex w-full justify-end gap-3">
+            <Button
+              size="medium"
+              color="secondary"
+              onClick={handleBackClick}
+              type="button"
+            >
               Cancelar
             </Button>
             <Button
               size="medium"
               color="primary"
               type="submit"
-              className={'w-24'}
-              disabled={isSubmitting}
+              className="w-24"
+              disabled={isWorking}
             >
-              {isSubmitting && <LoaderIcon className="animate-spin" />}
-              Salvar
+              <div className="flex items-center justify-center gap-2">
+                {isWorking ? <LoaderIcon className="animate-spin" /> : 'Salvar'}
+              </div>
             </Button>
           </div>
         </form>

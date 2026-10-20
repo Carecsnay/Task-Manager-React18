@@ -25,6 +25,10 @@ const AddTaskDialog = ({ isOpen, handleClose }) => {
         },
         body: JSON.stringify(newTask),
       });
+
+      if (!response.ok) {
+        throw new Error('Erro ao adicionar uma nova tarefa');
+      }
       return response.json();
     },
   });
@@ -59,23 +63,19 @@ const AddTaskDialog = ({ isOpen, handleClose }) => {
       description,
     };
 
-    try {
-      mutate(newTaskData, {
-        onSuccess: (savedTask) => {
-          queryClient.setQueryData(['tasks'], (currentTasks) => {
-            return [...currentTasks, savedTask];
-          });
+    mutate(newTaskData, {
+      onSuccess: (savedTask) => {
+        queryClient.setQueryData(['tasks'], (currentTasks) => {
+          return [...currentTasks, savedTask];
+        });
 
-          handleCloseAndReset();
-          toast.success('Tarefa adicionada com sucesso!');
-        },
-        onError: () => {
-          toast.error('Erro ao adicionar uma nova tarefa.');
-        },
-      });
-    } catch (error) {
-      toast.error('Erro ao adicionar uma nova tarefa.');
-    }
+        handleCloseAndReset();
+        toast.success('Tarefa adicionada com sucesso!');
+      },
+      onError: () => {
+        toast.error('Erro ao adicionar uma nova tarefa.');
+      },
+    });
   };
 
   return (
