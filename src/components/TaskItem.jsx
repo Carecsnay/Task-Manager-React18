@@ -15,7 +15,7 @@ const statusVariants = {
 
 const TaskItem = ({ task, handleCheckboxClick }) => {
   const queryClient = useQueryClient();
-  const { mutate, isPending } = useDeleteTask(task.id);
+  const { mutate: deleteTask, isPending } = useDeleteTask(task.id);
 
   const currentVariant =
     statusVariants[task?.status] || statusVariants['not_started'];
@@ -23,7 +23,7 @@ const TaskItem = ({ task, handleCheckboxClick }) => {
   const onCheckboxChange = () => handleCheckboxClick(task.id);
 
   const handleDeleteClick = () => {
-    mutate(undefined, {
+    deleteTask(undefined, {
       onSuccess: () => {
         //atualiza o cache de outro componente (sem passar prop)
         queryClient.setQueriesData({ queryKey: ['tasks'] }, (currentTasks) => {
