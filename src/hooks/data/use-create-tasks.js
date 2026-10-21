@@ -1,6 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 
 export const useCreateTasks = () => {
+  const queryClient = queryClient();
   return useMutation({
     mutationKey: ['addTask'],
     mutationFn: async (newTask) => {
@@ -17,6 +18,11 @@ export const useCreateTasks = () => {
       }
       const createdTask = await response.json();
       return createdTask;
+    },
+    onSuccess: (createdTask) => {
+      queryClient.setQueryData(['tasks'], (currentTasks) => {
+        return [...currentTasks, createdTask];
+      });
     },
   });
 };

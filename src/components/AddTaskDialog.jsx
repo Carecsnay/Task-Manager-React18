@@ -1,11 +1,10 @@
-import { useQueryClient } from '@tanstack/react-query';
 import PropTypes from 'prop-types';
 import { useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useForm } from 'react-hook-form';
 import { CSSTransition } from 'react-transition-group';
-
 import { toast } from 'sonner';
+
 import { LoaderIcon } from '../assets/icons';
 import { useCreateTasks } from '../hooks/data/use-create-tasks';
 import './AddTaskDialog.css';
@@ -15,7 +14,6 @@ import InputLabel from './InputLabel';
 import TimeSelect from './TimeSelect';
 
 const AddTaskDialog = ({ isOpen, handleClose }) => {
-  const queryClient = useQueryClient();
   const { mutate: createNewTask } = useCreateTasks();
   const nodeRef = useRef(null);
   const {
@@ -49,11 +47,7 @@ const AddTaskDialog = ({ isOpen, handleClose }) => {
     };
 
     createNewTask(newTaskData, {
-      onSuccess: (savedTask) => {
-        queryClient.setQueryData(['tasks'], (currentTasks) => {
-          return [...currentTasks, savedTask];
-        });
-
+      onSuccess: () => {
         handleCloseAndReset();
         toast.success('Tarefa adicionada com sucesso!');
       },
