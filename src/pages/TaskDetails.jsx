@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate, useParams } from 'react-router-dom';
@@ -15,9 +15,9 @@ import Input from '../components/Input';
 import Sidebar from '../components/Sidebar';
 import TimeSelect from '../components/TimeSelect';
 import { useDeleteTask } from '../hooks/data/use-delete-tasks';
+import { useDetailsTask } from '../hooks/data/use-details-task';
 
 const TaskDetailsPage = () => {
-  const queryClient = useQueryClient();
   const { taskId } = useParams();
   const navigate = useNavigate();
 
@@ -28,16 +28,7 @@ const TaskDetailsPage = () => {
     formState: { errors },
   } = useForm();
 
-  const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-  const { data: task } = useQuery({
-    queryKey: ['task', taskId],
-    queryFn: async () => {
-      const response = await fetch(`http://localhost:8000/tasks/${taskId}`);
-      if (!response.ok) throw new Error('Erro ao buscar tarefa');
-      return await response.json();
-    },
-  });
+  const { data: task } = useDetailsTask(taskId);
 
   // Preenche o formulário quando o task é carregado
   useEffect(() => {
@@ -68,19 +59,14 @@ const TaskDetailsPage = () => {
       if (!response.ok) {
         throw new Error('Erro ao atualizar a tarefa');
       }
-
-      return await response.json();
+      const updatedTask = await response.json();
+      return updatedTask;
     },
-    onSuccess: async (updatedTask) => {
-      queryClient.setQueryData(['tasks'], (oldTasks) => {
-        if (!oldTasks) return [];
-        return oldTasks.map((t) => (t.id === taskId ? updatedTask : t));
-      });
+  });
 
-      queryClient.invalidateQueries({ queryKey: ['task', taskId] });
-
+  updateTask(undefined, {
+    onSuccess: async () => {
       toast.success('Tarefa atualizada com sucesso!');
-      await delay(1000);
       handleBackClick();
     },
     onError: () => {
