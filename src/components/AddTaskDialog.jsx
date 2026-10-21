@@ -14,13 +14,13 @@ import InputLabel from './InputLabel';
 import TimeSelect from './TimeSelect';
 
 const AddTaskDialog = ({ isOpen, handleClose }) => {
-  const { mutate: createNewTask } = useCreateTasks();
+  const { mutate: createNewTask, isPending: isSubmitting } = useCreateTasks();
   const nodeRef = useRef(null);
   const {
     register,
     handleSubmit,
     reset,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm({
     defaultValues: {
       id: '',
