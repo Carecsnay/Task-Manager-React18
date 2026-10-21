@@ -1,4 +1,3 @@
-import { useMutation } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate, useParams } from 'react-router-dom';
@@ -16,6 +15,7 @@ import Sidebar from '../components/Sidebar';
 import TimeSelect from '../components/TimeSelect';
 import { useDeleteTask } from '../hooks/data/use-delete-tasks';
 import { useDetailsTask } from '../hooks/data/use-details-task';
+import { useUpdateTask } from '../hooks/data/use-update-tasks';
 
 const TaskDetailsPage = () => {
   const { taskId } = useParams();
@@ -45,45 +45,35 @@ const TaskDetailsPage = () => {
   const { mutate: deleteTask, isPending: deleteTaskisLoading } =
     useDeleteTask(taskId);
 
-  const { mutate: updateTask, isPending: updateTaskIsLoading } = useMutation({
-    mutationKey: ['updateTask', taskId],
-    mutationFn: async (data) => {
-      const response = await fetch(`http://localhost:8000/tasks/${taskId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        throw new Error('Erro ao atualizar a tarefa');
-      }
-      const updatedTask = await response.json();
-      return updatedTask;
-    },
-  });
-
-  updateTask(undefined, {
-    onSuccess: async () => {
-      toast.success('Tarefa atualizada com sucesso!');
-      handleBackClick();
-    },
-    onError: () => {
-      toast.error('Erro ao atualizar tarefa!');
-    },
-  });
+  const { mutate: updateTask, isPending: updateTaskIsLoading } =
+    useUpdateTask(taskId);
 
   const handleBackClick = () => {
     navigate(-1);
   };
 
   const handleDeleteClick = () => {
-    deleteTask();
+    deleteTask(undefined, {
+      onSuccess: () => {
+        toast.success('Tarefa deletada com sucesso!');
+        handleBackClick();
+      },
+      onError: () => {
+        toast.error('Ocorreu um erro ao deletar a tarefa!');
+      },
+    });
   };
 
   const handleSaveClick = (data) => {
-    updateTask(data);
+    updateTask(data, {
+      onSuccess: () => {
+        toast.success('Tarefa atualizada com sucesso!');
+        handleBackClick();
+      },
+      onError: () => {
+        toast.error('Erro ao atualizar tarefa!');
+      },
+    });
   };
 
   const isWorking = updateTaskIsLoading || deleteTaskisLoading;
