@@ -1,7 +1,7 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 export const useDeleteTask = (taskId) => {
-  const queryClient = queryClient();
+  const queryClient = useQueryClient();
   const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
   return useMutation({

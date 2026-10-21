@@ -1,7 +1,7 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 export const useCreateTasks = () => {
-  const queryClient = queryClient();
+  const queryClient = useQueryClient();
   return useMutation({
     mutationKey: ['addTask'],
     mutationFn: async (newTask) => {
