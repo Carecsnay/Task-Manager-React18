@@ -1,14 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
+import axios from 'axios';
 
 export const useDetailsTask = (taskId) => {
   return useQuery({
     queryKey: ['task', taskId],
     queryFn: async () => {
-      const response = await fetch(`http://localhost:8000/tasks/${taskId}`, {
-        method: 'GET',
-      });
-      if (!response.ok) throw new Error('Erro ao buscar tarefa');
-      const task = await response.json();
+      const { data: task } = await axios.get(
+        `http://localhost:8000/tasks/${taskId}`
+      );
       return task;
     },
   });
