@@ -1,9 +1,10 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'; // Importe o useQueryClient
+import { useQueryClient } from '@tanstack/react-query'; // Importe o useQueryClient
 import PropTypes from 'prop-types';
 import { memo } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { CheckIcon, DetailsIcon, LoaderIcon, TrashIcon } from '../assets/icons';
+import { useDeleteTask } from '../hooks/data/use-delete-tasks';
 import Button from './Button';
 
 const statusVariants = {
@@ -14,18 +15,7 @@ const statusVariants = {
 
 const TaskItem = ({ task, handleCheckboxClick }) => {
   const queryClient = useQueryClient();
-  const { mutate, isPending } = useMutation({
-    mutationKey: ['deleteTask', task.id],
-    mutationFn: async () => {
-      const response = await fetch(`http://localhost:8000/tasks/${task.id}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        throw new Error('Erro ao deletar tarefa no servidor.');
-      }
-    },
-  });
+  const { mutate, isPending } = useDeleteTask(task.id);
 
   const currentVariant =
     statusVariants[task?.status] || statusVariants['not_started'];
