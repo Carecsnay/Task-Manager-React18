@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import {
@@ -8,6 +8,7 @@ import {
   SunIcon,
   TrashIcon,
 } from '../assets/icons';
+import { useGetTasks } from '../hooks/data/use-get-tasks';
 import AddTaskDialog from './AddTaskDialog';
 import Button from './Button';
 import TaskItem from './TaskItem';
@@ -16,17 +17,7 @@ import TasksSeparator from './TasksSeparator';
 const Tasks = () => {
   //atualiza parcialmente o cache de data com o cache mais atual salvo local.
   const queryClient = useQueryClient();
-  const { data: tasks } = useQuery({
-    //id único, recomenda-se colocar em colchetes
-    queryKey: ['tasks'],
-    //função chamada assim que o useQuery é "montado" similar ao useEffect.
-    queryFn: async () => {
-      const response = await fetch('http://localhost:8000/tasks');
-      const tasks = await response.json();
-      //data recebe o que eu retornar aqui.
-      return tasks;
-    },
-  });
+  const { data: tasks } = useGetTasks();
   const [dialogIsOpen, setDialogIsOpen] = useState(false);
 
   const morningTasks = tasks?.filter((task) => task.time === 'morning');
