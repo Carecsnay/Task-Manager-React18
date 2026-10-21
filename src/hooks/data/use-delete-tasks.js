@@ -1,6 +1,9 @@
 import { useMutation } from '@tanstack/react-query';
 
 export const useDeleteTask = (taskId) => {
+  const queryClient = queryClient();
+  const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
   return useMutation({
     mutationKey: ['deleteTask', taskId],
     mutationFn: async () => {
@@ -9,8 +12,13 @@ export const useDeleteTask = (taskId) => {
       });
 
       if (!response.ok) {
-        throw new Error('Erro ao deletar tarefa no servidor.');
+        throw new Error('Erro ao deletar a tarefa.');
       }
+      return true;
+    },
+    onSuccess: async () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      await delay(1000);
     },
   });
 };

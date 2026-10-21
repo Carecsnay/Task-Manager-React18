@@ -1,8 +1,8 @@
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import {
   ArrowLeftIcon,
@@ -14,6 +14,7 @@ import Button from '../components/Button';
 import Input from '../components/Input';
 import Sidebar from '../components/Sidebar';
 import TimeSelect from '../components/TimeSelect';
+import { useDeleteTask } from '../hooks/data/use-delete-tasks';
 
 const TaskDetailsPage = () => {
   const queryClient = useQueryClient();
@@ -50,29 +51,8 @@ const TaskDetailsPage = () => {
     }
   }, [task, reset]);
 
-  const { mutate: deleteTask, isPending: deleteTaskisLoading } = useMutation({
-    mutationKey: ['delete', taskId],
-    mutationFn: async () => {
-      const response = await fetch(`http://localhost:8000/tasks/${taskId}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        throw new Error('Erro ao deletar a tarefa');
-      }
-
-      return true;
-    },
-    onSuccess: async () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      toast.success('Tarefa deletada com sucesso!');
-      await delay(1000);
-      handleBackClick();
-    },
-    onError: () => {
-      toast.error('Ocorreu um erro ao deletar a tarefa!');
-    },
-  });
+  const { mutate: deleteTask, isPending: deleteTaskisLoading } =
+    useDeleteTask(taskId);
 
   const { mutate: updateTask, isPending: updateTaskIsLoading } = useMutation({
     mutationKey: ['updateTask', taskId],
@@ -89,16 +69,14 @@ const TaskDetailsPage = () => {
         throw new Error('Erro ao atualizar a tarefa');
       }
 
-      return await response.json(); // ✅ Retorna o objeto atualizado
+      return await response.json();
     },
     onSuccess: async (updatedTask) => {
-      // Atualiza o cache da lista
       queryClient.setQueryData(['tasks'], (oldTasks) => {
         if (!oldTasks) return [];
         return oldTasks.map((t) => (t.id === taskId ? updatedTask : t));
       });
 
-      // Força re-fetch para garantir consistência
       queryClient.invalidateQueries({ queryKey: ['task', taskId] });
 
       toast.success('Tarefa atualizada com sucesso!');
