@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import PropTypes from 'prop-types';
 import { useRef } from 'react';
 import { createPortal } from 'react-dom';
@@ -7,6 +7,7 @@ import { CSSTransition } from 'react-transition-group';
 
 import { toast } from 'sonner';
 import { LoaderIcon } from '../assets/icons';
+import { useCreateTasks } from '../hooks/data/use-create-tasks';
 import './AddTaskDialog.css';
 import Button from './Button';
 import Input from './Input';
@@ -15,23 +16,7 @@ import TimeSelect from './TimeSelect';
 
 const AddTaskDialog = ({ isOpen, handleClose }) => {
   const queryClient = useQueryClient();
-  const { mutate } = useMutation({
-    mutationKey: ['addTask'],
-    mutationFn: async (newTask) => {
-      const response = await fetch('http://localhost:8000/tasks', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(newTask),
-      });
-
-      if (!response.ok) {
-        throw new Error('Erro ao adicionar uma nova tarefa');
-      }
-      return response.json();
-    },
-  });
+  const { mutate: createNewTask } = useCreateTasks();
   const nodeRef = useRef(null);
   const {
     register,
@@ -63,7 +48,7 @@ const AddTaskDialog = ({ isOpen, handleClose }) => {
       description,
     };
 
-    mutate(newTaskData, {
+    createNewTask(newTaskData, {
       onSuccess: (savedTask) => {
         queryClient.setQueryData(['tasks'], (currentTasks) => {
           return [...currentTasks, savedTask];
