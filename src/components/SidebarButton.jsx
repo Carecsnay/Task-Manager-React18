@@ -1,4 +1,5 @@
 import PropTypes from 'prop-types';
+import { NavLink } from 'react-router-dom';
 import { tv } from 'tailwind-variants';
 
 const sidebar = tv({
@@ -13,20 +14,24 @@ const sidebar = tv({
     color: 'unselected',
   },
 });
-const SidebarButton = ({ children, color, href }) => {
+const SidebarButton = ({ children, to }) => {
   return (
     <>
-      <a href={href} className={sidebar({ color })}>
+      <NavLink
+        to={to}
+        className={({ isActive }) =>
+          sidebar({ color: isActive ? 'selected' : 'unselected' })
+        }
+      >
         {children}
-      </a>
+      </NavLink>
     </>
   );
 };
 
 SidebarButton.propTypes = {
   children: PropTypes.node.isRequired,
-  color: PropTypes.oneOf(['unselected', 'selected']),
-  href: PropTypes.string.isRequired,
+  to: PropTypes.string.isRequired,
 };
 
 export default SidebarButton;
