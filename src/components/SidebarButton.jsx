@@ -13,10 +13,10 @@ const sidebar = tv({
     color: 'unselected',
   },
 });
-const SidebarButton = ({ children, color }) => {
+const SidebarButton = ({ children, color, href }) => {
   return (
     <>
-      <a href="/#" className={sidebar({ color })}>
+      <a href={href} className={sidebar({ color })}>
         {children}
       </a>
     </>
@@ -26,6 +26,7 @@ const SidebarButton = ({ children, color }) => {
 SidebarButton.propTypes = {
   children: PropTypes.node.isRequired,
   color: PropTypes.oneOf(['unselected', 'selected']),
+  href: PropTypes.string.isRequired,
 };
 
 export default SidebarButton;
