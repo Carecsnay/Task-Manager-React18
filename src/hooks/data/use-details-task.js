@@ -4,7 +4,7 @@ import { api } from '../../lib/axios';
 
 export const useDetailsTask = (taskId) => {
   return useQuery({
-    queryKey: taskQueriesKey.getTask(taskId),
+    queryKey: taskQueriesKey.getOneTask(taskId),
     queryFn: async () => {
       const { data: task } = await api.get(`/tasks/${taskId}`);
       return task;
