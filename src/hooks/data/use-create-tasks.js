@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import axios from 'axios';
+import { api } from '../../lib/axios';
 
 export const useCreateTasks = () => {
   const queryClient = useQueryClient();
@@ -7,14 +7,10 @@ export const useCreateTasks = () => {
     mutationKey: ['addTask'],
     mutationFn: async (newTask) => {
       //data é um pacote do axio com as informações inseridas.
-      const { data: createdTask } = await axios.post(
-        'http://localhost:8000/tasks',
-        newTask,
-        {
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(newTask),
-        }
-      );
+      const { data: createdTask } = await api.post('/tasks', newTask, {
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newTask),
+      });
 
       return createdTask;
     },
