@@ -1,16 +1,8 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
 import { toast } from 'sonner';
-import {
-  AddIcon,
-  CloudSunIcon,
-  MoonIcon,
-  SunIcon,
-  TrashIcon,
-} from '../assets/icons';
+import { CloudSunIcon, MoonIcon, SunIcon } from '../assets/icons';
 import { useGetTasks } from '../hooks/data/use-get-tasks';
-import AddTaskDialog from './AddTaskDialog';
-import Button from './Button';
+import Header from './Header';
 import TaskItem from './TaskItem';
 import TasksSeparator from './TasksSeparator';
 
@@ -18,7 +10,6 @@ const Tasks = () => {
   //atualiza parcialmente o cache de data com o cache mais atual salvo local.
   const queryClient = useQueryClient();
   const { data: tasks } = useGetTasks();
-  const [dialogIsOpen, setDialogIsOpen] = useState(false);
 
   const morningTasks = tasks?.filter((task) => task.time === 'morning');
   const afternoonTasks = tasks?.filter((task) => task.time === 'afternoon');
@@ -74,37 +65,9 @@ const Tasks = () => {
     }
   };
 
-  const handleCleanTasks = async () => {
-    await Promise.all(
-      tasks.map((task) =>
-        fetch(`http://localhost:8000/tasks/${task.id}`, {
-          method: 'DELETE',
-        })
-      )
-    );
-  };
-
   return (
     <div className="w-full space-y-6 px-8 py-16">
-      <div className="flex justify-between">
-        <div>
-          <h2 className="text-xl font-semibold text-brand-primary">Início</h2>
-          <span className="text-sm font-semibold">Minhas tarefas</span>
-        </div>
-        <div className="flex items-center gap-3">
-          <Button color="ghost" icon={<TrashIcon />} onClick={handleCleanTasks}>
-            Limpar Tarefas
-          </Button>
-          <Button icon={<AddIcon />} onClick={() => setDialogIsOpen(true)}>
-            Nova Tarefa
-          </Button>
-          <AddTaskDialog
-            isOpen={dialogIsOpen}
-            handleClose={() => setDialogIsOpen(false)}
-          />
-        </div>
-      </div>
-
+      <Header title="Início" subtitle="Minhas tarefas" />
       <div className="rounded bg-white p-6">
         <div className="my-6 space-y-3">
           <TasksSeparator title="Manhã" icon={<SunIcon />} />
