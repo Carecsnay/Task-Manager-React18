@@ -30,7 +30,7 @@ const Tasks = () => {
       },
       done: {
         newStatus: 'not_started',
-        message: 'Tarefa marcada como não iniciada!',
+        message: 'Tarefa não iniciada!',
       },
     };
 
