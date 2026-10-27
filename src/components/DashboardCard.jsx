@@ -13,7 +13,7 @@ const DashboardCard = ({ icon, count, contentText }) => {
 };
 
 DashboardCard.propTypes = {
-  icon: PropTypes.string.isRequired,
+  icon: PropTypes.node,
   count: PropTypes.number.isRequired,
   contentText: PropTypes.string.isRequired,
 };
