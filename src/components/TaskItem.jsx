@@ -1,10 +1,11 @@
-import { useQueryClient } from '@tanstack/react-query'; // Importe o useQueryClient
+import { useQueryClient } from '@tanstack/react-query';
 import PropTypes from 'prop-types';
 import { memo } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { CheckIcon, DetailsIcon, LoaderIcon, TrashIcon } from '../assets/icons';
 import { useDeleteTask } from '../hooks/data/use-delete-tasks';
+import { useUpdateTask } from '../hooks/data/use-update-tasks';
 import Button from './Button';
 
 const statusVariants = {
@@ -13,19 +14,50 @@ const statusVariants = {
   not_started: 'bg-brand-dark-blue/10 text-brand-dark-blue',
 };
 
-const TaskItem = ({ task, handleCheckboxClick }) => {
+const TaskItem = ({ task }) => {
   const queryClient = useQueryClient();
-  const { mutate: deleteTask, isPending } = useDeleteTask(task.id);
+  const { mutate: deleteTask, isPending: isDeleting } = useDeleteTask(task.id);
+  const { mutate: updateTask, isPending: isUpdating } = useUpdateTask(task.id);
 
   const currentVariant =
     statusVariants[task?.status] || statusVariants['not_started'];
 
-  const onCheckboxChange = () => handleCheckboxClick(task.id);
+  const handleCheckboxChange = () => {
+    const statusTransitions = {
+      not_started: {
+        newStatus: 'in_progress',
+        message: 'A tarefa está em progresso!',
+      },
+      in_progress: {
+        newStatus: 'done',
+        message: 'A tarefa foi finalizada!',
+      },
+      done: {
+        newStatus: 'not_started',
+        message: 'Tarefa não iniciada!',
+      },
+    };
+
+    const transition = statusTransitions[task.status];
+    if (!transition) return;
+
+    // Dispara a mutação do seu hook passando o objeto com o novo status
+    updateTask(
+      { status: transition.newStatus },
+      {
+        onSuccess: () => {
+          toast.success(transition.message);
+        },
+        onError: () => {
+          toast.error('Erro ao atualizar o status da tarefa.');
+        },
+      }
+    );
+  };
 
   const handleDeleteClick = () => {
     deleteTask(undefined, {
       onSuccess: () => {
-        //atualiza o cache de outro componente (sem passar prop)
         queryClient.setQueriesData({ queryKey: ['tasks'] }, (currentTasks) => {
           if (!currentTasks) return [];
           return currentTasks.filter((oldTask) => oldTask.id !== task.id);
@@ -50,8 +82,9 @@ const TaskItem = ({ task, handleCheckboxClick }) => {
           <input
             type="checkbox"
             checked={task.status === 'done'}
+            disabled={isUpdating}
             className="absolute h-full w-full cursor-pointer opacity-0"
-            onChange={onCheckboxChange}
+            onChange={handleCheckboxChange}
           />
           {task.status === 'done' && <CheckIcon />}
           {task.status === 'in_progress' && (
@@ -62,8 +95,8 @@ const TaskItem = ({ task, handleCheckboxClick }) => {
       </div>
 
       <div className="flex items-center justify-center gap-2">
-        <Button color="ghost" onClick={handleDeleteClick} disabled={isPending}>
-          {isPending ? (
+        <Button color="ghost" onClick={handleDeleteClick} disabled={isDeleting}>
+          {isDeleting ? (
             <LoaderIcon className="animate-spin text-brand-dark-gray" />
           ) : (
             <TrashIcon className="opacity-80 hover:text-brand-danger hover:opacity-100" />
@@ -86,7 +119,6 @@ TaskItem.propTypes = {
     title: PropTypes.string.isRequired,
     status: PropTypes.string.isRequired,
   }).isRequired,
-  handleCheckboxClick: PropTypes.func.isRequired,
 };
 
 export default memo(TaskItem);
